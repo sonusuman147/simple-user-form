@@ -9,38 +9,32 @@ const User = require("./models/User");
 
 const app = express();
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "Public"))); // Change to "public" if your folder name is lowercase
 
-// MongoDB Connection
-async function connectDB() {
-  try {
-    await mongoose.connect(process.env.MONGO_URI);
+// Connect MongoDB
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(() => {
     console.log("✅ MongoDB Connected");
-  } catch (err) {
-    console.error("❌ MongoDB Connection Failed:");
-    console.error(err.message);
-    process.exit(1);
-  }
-}
+  })
+  .catch((err) => {
+    console.error("❌ MongoDB Error:", err);
+  });
 
-connectDB();
-
-// Home Route
+// Home page
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "Public", "index.html"));
 });
 
-// Save Data Route
+// Save user
 app.post("/save", async (req, res) => {
   try {
     const user = new User(req.body);
-
     await user.save();
 
-    res.status(200).json({
+    res.json({
       success: true,
       message: "Data Saved Successfully",
     });
@@ -54,17 +48,14 @@ app.post("/save", async (req, res) => {
   }
 });
 
-// Health Check Route
+// Health check
 app.get("/health", (req, res) => {
-  res.json({
-    status: "Server Running",
-    database: mongoose.connection.readyState === 1 ? "Connected" : "Disconnected",
-  });
+  res.send("OK");
 });
 
-// Start Server
-const PORT = process.env.PORT || 5000;
+// IMPORTANT: Listen on all interfaces
+const PORT = process.env.PORT || 10000;
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server Running on Port ${PORT}`);
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`🚀 Server running on port ${PORT}`);
 });
